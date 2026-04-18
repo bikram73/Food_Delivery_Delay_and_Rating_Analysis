@@ -18,6 +18,3 @@ Thumbs.db
 # Project outputs and generated files
 outputs/
 food_delivery.csv
-
-# Tooling workspace
-.qodo/
