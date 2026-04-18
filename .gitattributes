@@ -1,0 +1,5 @@
+# Keep text normalization predictable across platforms
+* text=auto
+
+# Notebooks should keep LF to avoid noisy CRLF conversion warnings
+*.ipynb text eol=lf
