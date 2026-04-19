@@ -29,17 +29,34 @@ The current implementation also includes:
 
 ## 🗂️ Repository Structure
 
-- 🐍 `food_delivery_analysis.py`: Main reproducible analysis script
-- 📓 `food_delivery_analysis.ipynb`: Notebook version for interactive exploration
-- 📥 `Ecommerce_Delivery_Analytics_New.csv`: Raw input dataset
-- 🧹 `food_delivery.csv`: Cleaned output dataset (generated/updated by script)
-- 📝 `analysis_summary.md`: Auto-generated summary report
-- 🖼️ `outputs/`: Generated charts used by the analysis page
-- 🌐 `templates/`: Netlify-ready HTML pages and shared CSS
-  - `templates/index.html`: Project overview page
-  - `templates/analysis.html`: Chart analysis page
-  - `templates/style.css`: Shared page styling
-- ⚙️ `netlify.toml`: Netlify publish and redirect configuration
+```text
+Food_Delivery_Delay_and_Rating_Analysis/
+├── Ecommerce_Delivery_Analytics_New.csv
+├── README.md
+├── analysis_summary.md
+├── food_delivery.csv
+├── food_delivery_analysis.ipynb
+├── food_delivery_analysis.py
+├── netlify.toml
+├── outputs/
+│   ├── avg_delay_per_5min_bucket.png
+│   ├── avg_delay_per_hour.png
+│   ├── category_avg_delay.png
+│   ├── category_avg_rating.png
+│   ├── correlation_heatmap.png
+│   ├── delay_category_vs_rating_boxplot.png
+│   ├── delivery_duration_distribution.png
+│   ├── delivery_duration_vs_rating_scatter.png
+│   ├── order_value_vs_rating.png
+│   ├── orders_per_5min_bucket.png
+│   ├── orders_per_hour.png
+│   ├── rating_distribution.png
+│   └── refund_rate_by_duration_band.png
+└── templates/
+    ├── analysis.html
+    ├── index.html
+    └── style.css
+```
 
 ## 🧠 Data Processing and Feature Engineering
 
