@@ -24,6 +24,30 @@
           These visualizations are generated from the notebook and Python analysis pipeline.
           Each chart below explains what it shows and why it matters.
         </p>
+        <div class="hero-banner">
+          The dataset time field is minute-second formatted, so hour-based charts have limited spread.
+          To improve time insight quality, this project adds a 5-minute bucket fallback analysis.
+          <div class="chip-row">
+            <span class="chip primary">100,000 Orders</span>
+            <span class="chip secondary">29.54 min Avg Duration</span>
+            <span class="chip accent">3.24 Avg Rating</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="insight-grid">
+        <article class="insight-card primary">
+          <h3>Delay Pattern</h3>
+          <p>Late-order share is high enough to justify proactive intervention workflows.</p>
+        </article>
+        <article class="insight-card secondary">
+          <h3>Experience Pattern</h3>
+          <p>Rating vs duration relationship is very weak in this sample, indicating other factors matter.</p>
+        </article>
+        <article class="insight-card accent">
+          <h3>Refund Pattern</h3>
+          <p>Refund behavior should be monitored alongside feedback quality, not just delay threshold.</p>
+        </article>
       </section>
 
       <section class="chart-grid">
@@ -32,6 +56,10 @@
           <div class="chart-copy">
             <h3>Delivery Duration Distribution</h3>
             <p>Shows the spread of delivery times and helps identify typical delivery windows and tail delays.</p>
+            <ul>
+              <li>Operational use: pick SLA threshold candidates using the dense center and long-tail behavior.</li>
+              <li>Business use: design escalation triggers for the longest-delay segment.</li>
+            </ul>
           </div>
         </article>
 
@@ -40,6 +68,10 @@
           <div class="chart-copy">
             <h3>Rating Distribution</h3>
             <p>Shows how customer ratings are distributed across all orders and where satisfaction is concentrated.</p>
+            <ul>
+              <li>Operational use: quantify low-rating load requiring service recovery.</li>
+              <li>Business use: benchmark customer experience trend across future runs.</li>
+            </ul>
           </div>
         </article>
 
@@ -48,6 +80,10 @@
           <div class="chart-copy">
             <h3>Delivery Duration vs Rating</h3>
             <p>Compares delivery duration and rating per order to check whether slower deliveries reduce ratings.</p>
+            <ul>
+              <li>Current finding: weak association in this data, so delays alone do not explain rating behavior.</li>
+              <li>Next step: include product quality, missing items, and support response features.</li>
+            </ul>
           </div>
         </article>
 
@@ -56,6 +92,10 @@
           <div class="chart-copy">
             <h3>Delay Category vs Rating</h3>
             <p>Compares rating ranges for on-time and late orders to highlight variation and median behavior.</p>
+            <ul>
+              <li>Operational use: detect whether late orders materially shift rating distribution.</li>
+              <li>Business use: justify compensations for specific delay bands if rating drop is strong.</li>
+            </ul>
           </div>
         </article>
 
@@ -64,6 +104,10 @@
           <div class="chart-copy">
             <h3>Orders per Hour</h3>
             <p>Shows order volume by hour. In this dataset, hour values collapse due to minute-second time format.</p>
+            <ul>
+              <li>Interpretation caution: this chart is structurally limited by source time format.</li>
+              <li>Fallback below provides better short-interval time behavior.</li>
+            </ul>
           </div>
         </article>
 
@@ -72,6 +116,10 @@
           <div class="chart-copy">
             <h3>Average Delay per Hour</h3>
             <p>Shows average delay by hour. Useful for finding peak-delay periods when true hour data is available.</p>
+            <ul>
+              <li>Operational use: schedule staffing changes around high-delay windows when proper hour data exists.</li>
+              <li>Current project compensates with minute-bucket views.</li>
+            </ul>
           </div>
         </article>
 
@@ -80,6 +128,10 @@
           <div class="chart-copy">
             <h3>Orders per 5-Minute Bucket</h3>
             <p>Fallback time analysis using 5-minute buckets when hour-level information is not meaningful.</p>
+            <ul>
+              <li>Operational use: understand micro-peaks in order flow even without full timestamp context.</li>
+              <li>Useful for short-cycle dispatch planning and partner queue balancing.</li>
+            </ul>
           </div>
         </article>
 
@@ -88,6 +140,10 @@
           <div class="chart-copy">
             <h3>Average Delay per 5-Minute Bucket</h3>
             <p>Shows delay fluctuations across minute buckets and highlights the bucket with highest average delay.</p>
+            <ul>
+              <li>Current finding: peak delay appears around the 50-54 minute bucket.</li>
+              <li>Operational use: trigger proactive messaging during identified high-delay intervals.</li>
+            </ul>
           </div>
         </article>
 
@@ -96,6 +152,10 @@
           <div class="chart-copy">
             <h3>Category Average Delay</h3>
             <p>Compares average delay across product categories to identify the most operationally challenging segments.</p>
+            <ul>
+              <li>Current finding: Grocery is the highest-delay category in this run.</li>
+              <li>Operational use: tune packaging, picker allocation, and partner assignment by category.</li>
+            </ul>
           </div>
         </article>
 
@@ -104,6 +164,10 @@
           <div class="chart-copy">
             <h3>Category Average Rating</h3>
             <p>Shows which categories are rated lower and may need experience improvement.</p>
+            <ul>
+              <li>Current finding: Grocery is also lowest in rating, indicating category-specific friction.</li>
+              <li>Business use: prioritize category-level quality audits and communication fixes.</li>
+            </ul>
           </div>
         </article>
 
@@ -112,6 +176,10 @@
           <div class="chart-copy">
             <h3>Order Value vs Rating</h3>
             <p>Checks if higher-value orders receive better ratings. In this case, correlation is near zero.</p>
+            <ul>
+              <li>Interpretation: premium basket size does not guarantee better perceived service.</li>
+              <li>Business use: maintain quality consistency across all order values.</li>
+            </ul>
           </div>
         </article>
 
@@ -120,6 +188,10 @@
           <div class="chart-copy">
             <h3>Refund Rate by Duration Band</h3>
             <p>Shows how refund risk changes as delivery duration grows, useful for proactive customer recovery actions.</p>
+            <ul>
+              <li>Operational use: identify duration bands where compensation has the highest retention value.</li>
+              <li>Business use: build refund-risk thresholds for support automation.</li>
+            </ul>
           </div>
         </article>
 
@@ -128,8 +200,23 @@
           <div class="chart-copy">
             <h3>Correlation Heatmap</h3>
             <p>Summarizes pairwise relationships among key numerical variables used for diagnostic and model context.</p>
+            <ul>
+              <li>Modeling use: select candidate features and remove redundant variables before training.</li>
+              <li>Interpretation: near-zero pairs suggest weak linear links and need richer feature engineering.</li>
+            </ul>
           </div>
         </article>
+      </section>
+
+      <section class="section">
+        <h2>How to Read These Results</h2>
+        <div class="card">
+          <ul>
+            <li>Start with distribution charts to understand baseline behavior.</li>
+            <li>Then inspect relationship charts (scatter/box/correlation) for driver signals.</li>
+            <li>Finally, use category and time views to prioritize concrete operational actions.</li>
+          </ul>
+        </div>
       </section>
     </main>
 
