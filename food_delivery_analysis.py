@@ -164,10 +164,134 @@ def write_summary(cleaned: pd.DataFrame, raw: pd.DataFrame, output_path: Path) -
         )
 
     lines.append("")
+    lines.append("## Time-Based Analysis")
+    if {"order_hour", "delivery_duration_min"}.issubset(cleaned.columns):
+        hourly = (
+            cleaned.groupby("order_hour", dropna=True)
+            .agg(
+                orders=("order_id", "count"),
+                avg_delay_min=("delivery_duration_min", "mean"),
+            )
+            .dropna()
+            .sort_index()
+        )
+        if not hourly.empty:
+            peak_delay_hour = int(hourly["avg_delay_min"].idxmax())
+            peak_delay_value = float(hourly.loc[peak_delay_hour, "avg_delay_min"])
+            lines.append(f"- Peak average delay hour: {peak_delay_hour:02d}:00 ({peak_delay_value:.2f} min)")
+            top_hours = hourly.sort_values("orders", ascending=False).head(3)
+            lines.append(
+                "- Top 3 order volume hours: "
+                + ", ".join([f"{int(h):02d}:00 ({int(v)} orders)" for h, v in top_hours["orders"].items()])
+            )
+
+            if hourly.index.nunique() <= 1 and "order_minute_of_day" in cleaned.columns:
+                lines.append("- Note: source order time appears to be minute-second format, so hourly spread is limited")
+                minute_bucket = (
+                    cleaned.assign(minute_bucket=(cleaned["order_minute_of_day"] // 5 * 5).astype("Int64"))
+                    .groupby("minute_bucket", dropna=True)
+                    .agg(
+                        orders=("order_id", "count"),
+                        avg_delay_min=("delivery_duration_min", "mean"),
+                    )
+                    .dropna()
+                    .sort_index()
+                )
+                if not minute_bucket.empty:
+                    peak_min_bucket = int(minute_bucket["avg_delay_min"].idxmax())
+                    lines.append(
+                        f"- Peak 5-minute bucket by delay: {peak_min_bucket:02d}-{peak_min_bucket + 4:02d} min ({minute_bucket.loc[peak_min_bucket, 'avg_delay_min']:.2f} min)"
+                    )
+
+    lines.append("")
+    lines.append("## Product Category Analysis")
+    if {"product_category", "delivery_duration_min", "rating"}.issubset(cleaned.columns):
+        category_stats = (
+            cleaned.groupby("product_category", dropna=False)[["delivery_duration_min", "rating"]]
+            .mean()
+            .sort_values("delivery_duration_min", ascending=False)
+        )
+        if not category_stats.empty:
+            highest_delay_category = category_stats.index[0]
+            lowest_rating_category = category_stats["rating"].idxmin()
+            lines.append(
+                f"- Category with highest average delay: {highest_delay_category} ({category_stats.iloc[0]['delivery_duration_min']:.2f} min)"
+            )
+            lines.append(
+                f"- Category with lowest average rating: {lowest_rating_category} ({category_stats.loc[lowest_rating_category, 'rating']:.2f})"
+            )
+
+    lines.append("")
+    lines.append("## Order Value vs Rating")
+    if {"order_value_inr", "rating"}.issubset(cleaned.columns):
+        value_rating_corr = cleaned[["order_value_inr", "rating"]].corr().iloc[0, 1]
+        lines.append(f"- Correlation between order value and rating: {value_rating_corr:.4f}")
+        value_band = pd.qcut(cleaned["order_value_inr"], q=4, duplicates="drop")
+        value_segment_rating = cleaned.assign(value_band=value_band).groupby("value_band", observed=False)["rating"].mean()
+        if not value_segment_rating.empty:
+            best_band = value_segment_rating.idxmax()
+            lines.append(f"- Best rated order value segment: {best_band} ({value_segment_rating.max():.2f})")
+
+    lines.append("")
+    lines.append("## Refund Analysis")
+    if {"refund_requested", "rating", "delivery_duration_min", "delay_category"}.issubset(cleaned.columns):
+        refund_yes = cleaned["refund_requested"].eq("Yes")
+        refund_rating = cleaned.groupby(refund_yes, dropna=False)["rating"].mean()
+        if True in refund_rating.index and False in refund_rating.index:
+            lines.append(f"- Avg rating when refund requested: {refund_rating.loc[True]:.2f}")
+            lines.append(f"- Avg rating when no refund requested: {refund_rating.loc[False]:.2f}")
+
+        refund_by_delay = (
+            cleaned.assign(refund_yes=refund_yes.astype(int))
+            .groupby("delay_category", dropna=False)["refund_yes"]
+            .mean()
+            .mul(100)
+        )
+        if {"Late", "On-Time"}.issubset(refund_by_delay.index):
+            lift = refund_by_delay.loc["Late"] / refund_by_delay.loc["On-Time"] if refund_by_delay.loc["On-Time"] else np.nan
+            lines.append(
+                f"- Refund rate Late vs On-Time: {refund_by_delay.loc['Late']:.2f}% vs {refund_by_delay.loc['On-Time']:.2f}%"
+            )
+            if np.isfinite(lift):
+                lines.append(f"- Late orders have {lift:.2f}x higher refund rate than On-Time orders")
+
+    lines.append("")
+    lines.append("## Baseline ML Model (Predict Rating)")
+    ml_note = "- Baseline linear regression was skipped because required dependencies/features were unavailable"
+    if {"delivery_duration_min", "rating"}.issubset(cleaned.columns):
+        try:
+            from sklearn.linear_model import LinearRegression
+            from sklearn.metrics import mean_absolute_error, r2_score
+            from sklearn.model_selection import train_test_split
+
+            model_df = cleaned[["delivery_duration_min", "rating"]].dropna()
+            if len(model_df) > 20:
+                X = model_df[["delivery_duration_min"]]
+                y = model_df["rating"]
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+                model = LinearRegression()
+                model.fit(X_train, y_train)
+                preds = model.predict(X_test)
+                r2 = r2_score(y_test, preds)
+                mae = mean_absolute_error(y_test, preds)
+                lines.append(f"- Model: LinearRegression (features: delivery_duration_min)")
+                lines.append(f"- Test MAE: {mae:.4f}")
+                lines.append(f"- Test R^2: {r2:.4f}")
+                lines.append(
+                    f"- Estimated rating change per +1 minute delivery time: {float(model.coef_[0]):.4f}"
+                )
+            else:
+                lines.append("- Not enough non-null rows to train/test the baseline model")
+        except Exception:
+            lines.append(ml_note)
+
+    lines.append("")
     lines.append("## Business Recommendations")
-    lines.append("- Prioritize operations improvements for orders crossing 30 minutes, as late deliveries are linked with lower ratings")
-    lines.append("- Use platform and category level monitoring to target where high duration and low ratings overlap")
-    lines.append("- Trigger proactive communication and compensation flows for likely-late orders to reduce refund requests")
+    lines.append("- If predicted or observed delivery exceeds 30 minutes, trigger proactive apology coupon communication")
+    lines.append("- Prioritize high-delay product categories for dispatch optimization and packaging process fixes")
+    lines.append("- Increase delivery partner availability during peak delay hours to reduce backlog")
+    lines.append("- Use refund-risk monitoring for late orders to trigger faster support intervention")
+    lines.append("- Track value-segment experience to ensure high-value customers receive consistently high service")
     lines.append("")
     lines.append("## Data Limitations")
     lines.append("- This dataset does not include delivery distance, restaurant prep time, delivery partner ID, or city-level location")
@@ -226,7 +350,6 @@ def make_plots(cleaned: pd.DataFrame) -> None:
         hue="delay_category",
         order=["On-Time", "Late"],
         palette="viridis",
-        legend=False,
     )
     plt.title("Delay Category vs Rating")
     plt.xlabel("Delay Category")
@@ -234,6 +357,135 @@ def make_plots(cleaned: pd.DataFrame) -> None:
     plt.tight_layout()
     plt.savefig(FIGURE_DIR / "delay_category_vs_rating_boxplot.png", dpi=150)
     plt.close()
+
+    if {"order_hour", "delivery_duration_min", "order_id"}.issubset(cleaned.columns):
+        hourly = (
+            cleaned.groupby("order_hour", dropna=True)
+            .agg(
+                orders=("order_id", "count"),
+                avg_delay_min=("delivery_duration_min", "mean"),
+            )
+            .dropna()
+            .sort_index()
+            .reset_index()
+        )
+        if not hourly.empty:
+            hourly["order_hour"] = pd.to_numeric(hourly["order_hour"], errors="coerce")
+            hourly["avg_delay_min"] = pd.to_numeric(hourly["avg_delay_min"], errors="coerce")
+            hourly = hourly.dropna(subset=["order_hour", "avg_delay_min"])
+
+            plt.figure(figsize=(10, 4))
+            sns.barplot(data=hourly, x="order_hour", y="orders", color="#1d4ed8")
+            plt.title("Orders per Hour")
+            plt.xlabel("Order Hour")
+            plt.ylabel("Orders")
+            plt.tight_layout()
+            plt.savefig(FIGURE_DIR / "orders_per_hour.png", dpi=150)
+            plt.close()
+
+            plt.figure(figsize=(10, 4))
+            plt.plot(hourly["order_hour"], hourly["avg_delay_min"], marker="o", color="#b91c1c")
+            plt.title("Average Delay per Hour")
+            plt.xlabel("Order Hour")
+            plt.ylabel("Average Delivery Duration (min)")
+            plt.tight_layout()
+            plt.savefig(FIGURE_DIR / "avg_delay_per_hour.png", dpi=150)
+            plt.close()
+
+            if hourly["order_hour"].nunique() <= 1 and "order_minute_of_day" in cleaned.columns:
+                minute_bucket = (
+                    cleaned.assign(minute_bucket=(cleaned["order_minute_of_day"] // 5 * 5).astype("Int64"))
+                    .groupby("minute_bucket", dropna=True)
+                    .agg(
+                        orders=("order_id", "count"),
+                        avg_delay_min=("delivery_duration_min", "mean"),
+                    )
+                    .dropna()
+                    .reset_index()
+                )
+                if not minute_bucket.empty:
+                    minute_bucket["minute_bucket"] = pd.to_numeric(minute_bucket["minute_bucket"], errors="coerce")
+                    minute_bucket = minute_bucket.dropna(subset=["minute_bucket"])
+
+                    plt.figure(figsize=(10, 4))
+                    sns.barplot(data=minute_bucket, x="minute_bucket", y="orders", color="#2563eb")
+                    plt.title("Orders per 5-Minute Bucket")
+                    plt.xlabel("Minute Bucket Start")
+                    plt.ylabel("Orders")
+                    plt.tight_layout()
+                    plt.savefig(FIGURE_DIR / "orders_per_5min_bucket.png", dpi=150)
+                    plt.close()
+
+                    plt.figure(figsize=(10, 4))
+                    plt.plot(minute_bucket["minute_bucket"], minute_bucket["avg_delay_min"], marker="o", color="#ef4444")
+                    plt.title("Average Delay per 5-Minute Bucket")
+                    plt.xlabel("Minute Bucket Start")
+                    plt.ylabel("Average Delivery Duration (min)")
+                    plt.tight_layout()
+                    plt.savefig(FIGURE_DIR / "avg_delay_per_5min_bucket.png", dpi=150)
+                    plt.close()
+
+    if {"product_category", "delivery_duration_min", "rating"}.issubset(cleaned.columns):
+        cat = (
+            cleaned.groupby("product_category", dropna=False)[["delivery_duration_min", "rating"]]
+            .mean()
+            .sort_values("delivery_duration_min", ascending=False)
+            .head(10)
+            .reset_index()
+        )
+        if not cat.empty:
+            plt.figure(figsize=(11, 5))
+            sns.barplot(data=cat, x="product_category", y="delivery_duration_min", color="#ea580c")
+            plt.title("Top Categories by Average Delivery Delay")
+            plt.xlabel("Product Category")
+            plt.ylabel("Average Delivery Duration (min)")
+            plt.xticks(rotation=35, ha="right")
+            plt.tight_layout()
+            plt.savefig(FIGURE_DIR / "category_avg_delay.png", dpi=150)
+            plt.close()
+
+            plt.figure(figsize=(11, 5))
+            sns.barplot(data=cat.sort_values("rating", ascending=True), x="product_category", y="rating", color="#0f766e")
+            plt.title("Category Rating Comparison")
+            plt.xlabel("Product Category")
+            plt.ylabel("Average Rating")
+            plt.xticks(rotation=35, ha="right")
+            plt.tight_layout()
+            plt.savefig(FIGURE_DIR / "category_avg_rating.png", dpi=150)
+            plt.close()
+
+    if {"order_value_inr", "rating"}.issubset(cleaned.columns):
+        sample = cleaned[["order_value_inr", "rating"]].dropna().sample(
+            n=min(5000, cleaned[["order_value_inr", "rating"]].dropna().shape[0]),
+            random_state=42,
+        )
+        if not sample.empty:
+            plt.figure(figsize=(9, 5))
+            sns.scatterplot(data=sample, x="order_value_inr", y="rating", alpha=0.35, color="#7c3aed")
+            plt.title("Order Value vs Rating")
+            plt.xlabel("Order Value (INR)")
+            plt.ylabel("Rating")
+            plt.tight_layout()
+            plt.savefig(FIGURE_DIR / "order_value_vs_rating.png", dpi=150)
+            plt.close()
+
+    if {"refund_requested", "delivery_duration_min"}.issubset(cleaned.columns):
+        refund_delay = (
+            cleaned.assign(refund_yes=cleaned["refund_requested"].eq("Yes").astype(int))
+            .groupby("duration_band", dropna=False)["refund_yes"]
+            .mean()
+            .mul(100)
+            .reset_index(name="refund_rate_pct")
+        )
+        if not refund_delay.empty:
+            plt.figure(figsize=(9, 5))
+            sns.barplot(data=refund_delay, x="duration_band", y="refund_rate_pct", color="#dc2626")
+            plt.title("Refund Rate by Delivery Duration Band")
+            plt.xlabel("Delivery Duration Band (min)")
+            plt.ylabel("Refund Rate (%)")
+            plt.tight_layout()
+            plt.savefig(FIGURE_DIR / "refund_rate_by_duration_band.png", dpi=150)
+            plt.close()
 
     corr_cols = [col for col in ["delivery_duration_min", "rating", "order_value_inr", "order_minute_of_day"] if col in cleaned.columns]
     if len(corr_cols) >= 2:
@@ -268,6 +520,13 @@ def main() -> None:
     print(f"Average rating: {cleaned['rating'].mean():.2f} / 5")
     print(f"Late share (>30 min): {late_share:.2f}%")
     print(f"Duration vs rating correlation: {duration_rating_corr:.4f}")
+    if {"order_hour", "delivery_duration_min"}.issubset(cleaned.columns):
+        hour_delay = cleaned.groupby("order_hour", dropna=True)["delivery_duration_min"].mean()
+        if not hour_delay.empty:
+            peak_hour = int(hour_delay.idxmax())
+            print(f"Peak delay hour: {peak_hour:02d}:00 ({hour_delay.max():.2f} min)")
+            if hour_delay.index.nunique() <= 1:
+                print("Note: order hour is concentrated in a single bucket; source time appears minute-second formatted")
     print("\nSummary preview:\n")
     print(summary_text)
 
