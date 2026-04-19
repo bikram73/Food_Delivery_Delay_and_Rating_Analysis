@@ -34,7 +34,12 @@ The current implementation also includes:
 - 📥 `Ecommerce_Delivery_Analytics_New.csv`: Raw input dataset
 - 🧹 `food_delivery.csv`: Cleaned output dataset (generated/updated by script)
 - 📝 `analysis_summary.md`: Auto-generated summary report
-- 🖼️ `outputs/`: Generated charts
+- 🖼️ `outputs/`: Generated charts used by the analysis page
+- 🌐 `templates/`: Netlify-ready HTML pages and shared CSS
+  - `templates/index.html`: Project overview page
+  - `templates/analysis.html`: Chart analysis page
+  - `templates/style.css`: Shared page styling
+- ⚙️ `netlify.toml`: Netlify publish and redirect configuration
 
 ## 🧠 Data Processing and Feature Engineering
 
