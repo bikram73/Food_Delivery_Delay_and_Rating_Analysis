@@ -137,3 +137,7 @@ After completion, you should see:
 - Add classification model for refund risk prediction
 - Incorporate weather/traffic context if available
 - Build an interactive dashboard (Streamlit/Power BI) using generated outputs
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
