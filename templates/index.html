@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Food Delivery Delay and Rating Analysis</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="container nav">
+        <div class="brand">Food Delivery Analytics</div>
+        <nav class="nav-links">
+          <a href="index.html">Overview</a>
+          <a href="analysis.html">Chart Analysis</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <h1>Food Delivery Delay and Rating Analysis</h1>
+        <p>
+          This project analyzes 100,000 food delivery records to understand delay trends,
+          customer ratings, refund behavior, and practical business actions.
+        </p>
+      </section>
+
+      <section class="kpi-grid">
+        <article class="kpi">
+          <h3>100,000</h3>
+          <p>Orders Analyzed</p>
+        </article>
+        <article class="kpi">
+          <h3>29.54 min</h3>
+          <p>Avg Delivery Time</p>
+        </article>
+        <article class="kpi">
+          <h3>3.24 / 5</h3>
+          <p>Avg Service Rating</p>
+        </article>
+        <article class="kpi">
+          <h3>46.16%</h3>
+          <p>Late Orders Share</p>
+        </article>
+        <article class="kpi">
+          <h3>45.94%</h3>
+          <p>Refund Rate for Late Orders</p>
+        </article>
+      </section>
+
+      <section class="section">
+        <h2>Project Scope</h2>
+        <div class="card">
+          <ul>
+            <li>Data cleaning and feature engineering from raw ecommerce delivery records.</li>
+            <li>Delay, rating, category, value, and refund behavior analysis.</li>
+            <li>Time-based analysis with 5-minute fallback because source time is minute-second formatted.</li>
+            <li>Baseline machine learning model (Linear Regression) to predict rating using delivery duration.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Key Findings</h2>
+        <div class="card">
+          <ul>
+            <li>Platform with highest average delivery time: JioMart (29.63 min).</li>
+            <li>Category with highest delay: Grocery (29.58 min).</li>
+            <li>Category with lowest rating: Grocery (3.22).</li>
+            <li>Order value vs rating correlation is nearly zero (-0.0027).</li>
+            <li>Late vs on-time refund rate is almost identical in this dataset (1.00x).</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Business Recommendations</h2>
+        <div class="card">
+          <ul>
+            <li>If delivery exceeds 30 minutes, trigger apology coupon workflow.</li>
+            <li>Optimize high-delay categories with better dispatch and packaging flow.</li>
+            <li>Increase delivery partner availability during peak delay windows.</li>
+            <li>Use refund-risk flags for faster support intervention.</li>
+            <li>Use model output as an early signal for customer satisfaction drop.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="note">
+          Open <strong>Chart Analysis</strong> to view all generated charts with explanations.
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">Built from food_delivery_analysis.ipynb outputs.</div>
+    </footer>
+  </body>
+</html>

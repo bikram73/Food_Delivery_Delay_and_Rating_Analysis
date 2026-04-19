@@ -19,6 +19,14 @@ The current implementation also includes:
 - 🔁 Refund deep-dive (refund vs rating, refund vs delay)
 - 🤖 Baseline ML model to predict rating from delivery duration
 
+## 🗃️ Dataset Details
+
+- **Dataset name:** E-Commerce Analytics (Swiggy, Zomato, Blinkit)
+- **Source:** Kaggle
+- **Kaggle link:** https://www.kaggle.com/datasets/logiccraftbyhimanshi/e-commerce-analytics-swiggy-zomato-blinkit
+- **Local file used in this project:** `Ecommerce_Delivery_Analytics_New.csv`
+- **Note:** Please follow Kaggle dataset licensing/usage terms when redistributing data.
+
 ## 🗂️ Repository Structure
 
 - 🐍 `food_delivery_analysis.py`: Main reproducible analysis script
