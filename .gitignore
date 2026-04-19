@@ -16,5 +16,5 @@ Thumbs.db
 .vscode/
 
 # Project outputs and generated files
-outputs/
+!outputs/
 food_delivery.csv
