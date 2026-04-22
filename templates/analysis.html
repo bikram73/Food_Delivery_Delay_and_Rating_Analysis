@@ -4,15 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chart Analysis | Food Delivery Analytics</title>
-    <link rel="stylesheet" href="/templates/style.css" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header>
       <div class="container nav">
         <div class="brand">Food Delivery Analytics</div>
         <nav class="nav-links">
-          <a href="/templates/index.html">Overview</a>
-          <a href="/templates/analysis.html">Chart Analysis</a>
+          <a href="index.html">Overview</a>
+          <a href="analysis.html">Chart Analysis</a>
         </nav>
       </div>
     </header>
@@ -52,7 +52,7 @@
 
       <section class="chart-grid">
         <article class="chart-card">
-          <img src="/outputs/delivery_duration_distribution.png" alt="Delivery Duration Distribution" />
+          <img src="outputs/delivery_duration_distribution.png" alt="Delivery Duration Distribution" />
           <div class="chart-copy">
             <h3>Delivery Duration Distribution</h3>
             <p>Shows the spread of delivery times and helps identify typical delivery windows and tail delays.</p>
@@ -64,7 +64,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/rating_distribution.png" alt="Rating Distribution" />
+          <img src="outputs/rating_distribution.png" alt="Rating Distribution" />
           <div class="chart-copy">
             <h3>Rating Distribution</h3>
             <p>Shows how customer ratings are distributed across all orders and where satisfaction is concentrated.</p>
@@ -76,7 +76,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/delivery_duration_vs_rating_scatter.png" alt="Delivery Duration vs Rating" />
+          <img src="outputs/delivery_duration_vs_rating_scatter.png" alt="Delivery Duration vs Rating" />
           <div class="chart-copy">
             <h3>Delivery Duration vs Rating</h3>
             <p>Compares delivery duration and rating per order to check whether slower deliveries reduce ratings.</p>
@@ -88,7 +88,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/delay_category_vs_rating_boxplot.png" alt="Delay Category vs Rating" />
+          <img src="outputs/delay_category_vs_rating_boxplot.png" alt="Delay Category vs Rating" />
           <div class="chart-copy">
             <h3>Delay Category vs Rating</h3>
             <p>Compares rating ranges for on-time and late orders to highlight variation and median behavior.</p>
@@ -100,7 +100,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/orders_per_hour.png" alt="Orders per Hour" />
+          <img src="outputs/orders_per_hour.png" alt="Orders per Hour" />
           <div class="chart-copy">
             <h3>Orders per Hour</h3>
             <p>Shows order volume by hour. In this dataset, hour values collapse due to minute-second time format.</p>
@@ -112,7 +112,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/avg_delay_per_hour.png" alt="Average Delay per Hour" />
+          <img src="outputs/avg_delay_per_hour.png" alt="Average Delay per Hour" />
           <div class="chart-copy">
             <h3>Average Delay per Hour</h3>
             <p>Shows average delay by hour. Useful for finding peak-delay periods when true hour data is available.</p>
@@ -124,7 +124,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/orders_per_5min_bucket.png" alt="Orders per 5-Minute Bucket" />
+          <img src="outputs/orders_per_5min_bucket.png" alt="Orders per 5-Minute Bucket" />
           <div class="chart-copy">
             <h3>Orders per 5-Minute Bucket</h3>
             <p>Fallback time analysis using 5-minute buckets when hour-level information is not meaningful.</p>
@@ -136,7 +136,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/avg_delay_per_5min_bucket.png" alt="Average Delay per 5-Minute Bucket" />
+          <img src="outputs/avg_delay_per_5min_bucket.png" alt="Average Delay per 5-Minute Bucket" />
           <div class="chart-copy">
             <h3>Average Delay per 5-Minute Bucket</h3>
             <p>Shows delay fluctuations across minute buckets and highlights the bucket with highest average delay.</p>
@@ -148,7 +148,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/category_avg_delay.png" alt="Category Average Delay" />
+          <img src="outputs/category_avg_delay.png" alt="Category Average Delay" />
           <div class="chart-copy">
             <h3>Category Average Delay</h3>
             <p>Compares average delay across product categories to identify the most operationally challenging segments.</p>
@@ -160,7 +160,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/category_avg_rating.png" alt="Category Average Rating" />
+          <img src="outputs/category_avg_rating.png" alt="Category Average Rating" />
           <div class="chart-copy">
             <h3>Category Average Rating</h3>
             <p>Shows which categories are rated lower and may need experience improvement.</p>
@@ -172,7 +172,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/order_value_vs_rating.png" alt="Order Value vs Rating" />
+          <img src="outputs/order_value_vs_rating.png" alt="Order Value vs Rating" />
           <div class="chart-copy">
             <h3>Order Value vs Rating</h3>
             <p>Checks if higher-value orders receive better ratings. In this case, correlation is near zero.</p>
@@ -184,7 +184,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/refund_rate_by_duration_band.png" alt="Refund Rate by Duration Band" />
+          <img src="outputs/refund_rate_by_duration_band.png" alt="Refund Rate by Duration Band" />
           <div class="chart-copy">
             <h3>Refund Rate by Duration Band</h3>
             <p>Shows how refund risk changes as delivery duration grows, useful for proactive customer recovery actions.</p>
@@ -196,7 +196,7 @@
         </article>
 
         <article class="chart-card">
-          <img src="/outputs/correlation_heatmap.png" alt="Correlation Heatmap" />
+          <img src="outputs/correlation_heatmap.png" alt="Correlation Heatmap" />
           <div class="chart-copy">
             <h3>Correlation Heatmap</h3>
             <p>Summarizes pairwise relationships among key numerical variables used for diagnostic and model context.</p>

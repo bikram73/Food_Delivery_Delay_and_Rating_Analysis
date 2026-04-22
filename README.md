@@ -37,7 +37,6 @@ Food_Delivery_Delay_and_Rating_Analysis/
 ├── food_delivery.csv
 ├── food_delivery_analysis.ipynb
 ├── food_delivery_analysis.py
-├── netlify.toml
 ├── outputs/
 │   ├── avg_delay_per_5min_bucket.png
 │   ├── avg_delay_per_hour.png
@@ -125,6 +124,26 @@ After completion, you should see:
 - ✅ Updated `food_delivery.csv`
 - ✅ Updated `analysis_summary.md`
 - ✅ Refreshed plot images in `outputs/`
+
+## 🌐 Deploy on GitHub Pages (Templates Only)
+
+This repository is configured to deploy using GitHub Pages from the files inside `templates/` (without creating any root-level index page outside `templates/`).
+
+Deployment behavior:
+- `templates/index.html` is published as the site homepage.
+- `templates/analysis.html` is published as the analysis page.
+- `templates/style.css` is published for styling.
+- `outputs/` is copied into the deployment artifact so all charts render on the site.
+
+### Steps
+
+1. Push your code to `main`.
+2. In GitHub, open `Settings` → `Pages`.
+3. Under **Build and deployment**, choose **Source: GitHub Actions**.
+4. The workflow at `.github/workflows/deploy-pages.yml` will deploy automatically on push to `main`.
+
+After first deployment, your site URL will be:
+- `https://<your-username>.github.io/<your-repo>/`
 
 ## 🔁 Reproducibility Notes
 
