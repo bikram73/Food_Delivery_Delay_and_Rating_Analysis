@@ -22,12 +22,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Build site artifact from templates
         run: |
           mkdir -p _site
           cp -R templates/. _site/
           mkdir -p _site/outputs
           cp -R outputs/. _site/outputs/ || true
+          touch _site/.nojekyll
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
