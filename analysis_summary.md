@@ -6,6 +6,10 @@
 - Duplicate order IDs removed: 0
 - Columns were standardized to snake_case and key fields were converted to numeric types
 - Delay category is derived using delivery time (>30 min = Late) and Delivery Delay flag
+- Validation check (key nulls): PASS
+- Validation check (numeric dtypes): PASS
+- Validation check (duplicate order_id after cleaning): PASS
+- Validation check (order_hour in 0-23): PASS
 
 ## Core Findings
 - Average delivery duration: 29.54 minutes

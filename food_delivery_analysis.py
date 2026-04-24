@@ -29,6 +29,15 @@ COLUMN_MAP = {
     "Refund Requested": "refund_requested",
 }
 
+KEY_VALIDATION_COLUMNS = [
+    "order_id",
+    "delivery_duration_min",
+    "rating",
+    "platform",
+    "product_category",
+    "refund_requested",
+]
+
 
 def load_data(path: Path) -> pd.DataFrame:
     # Centralized CSV reader so source switching is simple.
@@ -128,7 +137,51 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     return cleaned[existing_order + remaining_columns]
 
 
-def write_summary(cleaned: pd.DataFrame, raw: pd.DataFrame, output_path: Path) -> str:
+def validate_dataset_consistency(cleaned: pd.DataFrame) -> dict[str, object]:
+    """Run data-quality checks required before charting and return structured results."""
+    existing_key_columns = [col for col in KEY_VALIDATION_COLUMNS if col in cleaned.columns]
+
+    null_counts = (
+        cleaned[existing_key_columns].isna().sum().to_dict() if existing_key_columns else {}
+    )
+
+    numeric_expectations = {
+        "delivery_duration_min": "numeric",
+        "rating": "numeric",
+        "order_value_inr": "numeric",
+        "order_minute_of_day": "numeric",
+        "order_hour": "numeric",
+    }
+    dtype_checks: dict[str, bool] = {}
+    for col, expected in numeric_expectations.items():
+        if col in cleaned.columns:
+            dtype_checks[col] = bool(
+                pd.api.types.is_numeric_dtype(cleaned[col]) if expected == "numeric" else True
+            )
+
+    duplicate_order_ids = int(cleaned["order_id"].duplicated().sum()) if "order_id" in cleaned.columns else -1
+
+    hour_range_ok = True
+    if "order_hour" in cleaned.columns:
+        non_null_hours = cleaned["order_hour"].dropna()
+        if not non_null_hours.empty:
+            hour_range_ok = bool(non_null_hours.between(0, 23).all())
+
+    return {
+        "key_columns_checked": existing_key_columns,
+        "null_counts": null_counts,
+        "dtype_checks": dtype_checks,
+        "duplicate_order_ids": duplicate_order_ids,
+        "hour_range_ok": hour_range_ok,
+    }
+
+
+def write_summary(
+    cleaned: pd.DataFrame,
+    raw: pd.DataFrame,
+    output_path: Path,
+    validation: dict[str, object] | None = None,
+) -> str:
     # Boolean mask used repeatedly for Late vs On-Time comparisons.
     late_mask = cleaned.get("delay_category", pd.Series(index=cleaned.index, dtype="object")).eq("Late")
 
@@ -156,6 +209,21 @@ def write_summary(cleaned: pd.DataFrame, raw: pd.DataFrame, output_path: Path) -
     lines.append(f"- Duplicate order IDs removed: {int(raw['Order ID'].duplicated().sum()):,}")
     lines.append("- Columns were standardized to snake_case and key fields were converted to numeric types")
     lines.append("- Delay category is derived using delivery time (>30 min = Late) and Delivery Delay flag")
+    if validation:
+        null_counts = validation.get("null_counts", {})
+        dtype_checks = validation.get("dtype_checks", {})
+        duplicate_order_ids = validation.get("duplicate_order_ids", -1)
+        hour_range_ok = validation.get("hour_range_ok", True)
+
+        null_free = all(value == 0 for value in null_counts.values()) if null_counts else True
+        dtypes_ok = all(bool(value) for value in dtype_checks.values()) if dtype_checks else True
+
+        lines.append(f"- Validation check (key nulls): {'PASS' if null_free else 'FAIL'}")
+        lines.append(f"- Validation check (numeric dtypes): {'PASS' if dtypes_ok else 'FAIL'}")
+        lines.append(
+            f"- Validation check (duplicate order_id after cleaning): {'PASS' if duplicate_order_ids == 0 else 'FAIL'}"
+        )
+        lines.append(f"- Validation check (order_hour in 0-23): {'PASS' if hour_range_ok else 'FAIL'}")
     lines.append("")
     lines.append("## Core Findings")
     lines.append(f"- Average delivery duration: {cleaned['delivery_duration_min'].mean():.2f} minutes")
@@ -348,8 +416,13 @@ def make_plots(cleaned: pd.DataFrame) -> None:
     plt.savefig(FIGURE_DIR / "rating_distribution.png", dpi=150)
     plt.close()
 
+    duration_series = cleaned["delivery_duration_min"].dropna()
+    dynamic_bins = 30
+    if not duration_series.empty:
+        dynamic_bins = int(np.clip(len(np.histogram_bin_edges(duration_series, bins="auto")) - 1, 10, 60))
+
     plt.figure(figsize=(8, 4))
-    sns.histplot(cleaned["delivery_duration_min"], bins=30, kde=True, color="#0f766e")
+    sns.histplot(duration_series, bins=dynamic_bins, kde=True, color="#0f766e")
     plt.title("Delivery Duration Distribution")
     plt.xlabel("Delivery Duration (minutes)")
     plt.ylabel("Orders")
@@ -361,6 +434,14 @@ def make_plots(cleaned: pd.DataFrame) -> None:
     # Sample cap keeps scatter rendering performant on large datasets.
     plt.figure(figsize=(8, 5))
     sns.scatterplot(data=sample, x="delivery_duration_min", y="rating", hue="delay_category", alpha=0.5)
+    sns.regplot(
+        data=sample,
+        x="delivery_duration_min",
+        y="rating",
+        scatter=False,
+        color="black",
+        line_kws={"linewidth": 1.5, "alpha": 0.7},
+    )
     plt.title("Delivery Duration vs Rating")
     plt.xlabel("Delivery Duration (minutes)")
     plt.ylabel("Rating")
@@ -400,6 +481,8 @@ def make_plots(cleaned: pd.DataFrame) -> None:
             hourly["order_hour"] = pd.to_numeric(hourly["order_hour"], errors="coerce")
             hourly["avg_delay_min"] = pd.to_numeric(hourly["avg_delay_min"], errors="coerce")
             hourly = hourly.dropna(subset=["order_hour", "avg_delay_min"])
+            hourly = hourly[hourly["order_hour"].between(0, 23)]
+            hourly = hourly.sort_values("order_hour")
 
             plt.figure(figsize=(10, 4))
             sns.barplot(data=hourly, x="order_hour", y="orders", color="#1d4ed8")
@@ -515,6 +598,36 @@ def make_plots(cleaned: pd.DataFrame) -> None:
             plt.savefig(FIGURE_DIR / "refund_rate_by_duration_band.png", dpi=150)
             plt.close()
 
+    if {"refund_requested", "rating"}.issubset(cleaned.columns):
+        refund_rating = (
+            cleaned.groupby("refund_requested", dropna=False)["rating"].mean().reset_index(name="avg_rating")
+        )
+        if not refund_rating.empty:
+            plt.figure(figsize=(8, 4))
+            sns.barplot(data=refund_rating, x="refund_requested", y="avg_rating", color="#9333ea")
+            plt.title("Average Rating by Refund Requested")
+            plt.xlabel("Refund Requested")
+            plt.ylabel("Average Rating")
+            plt.tight_layout()
+            plt.savefig(FIGURE_DIR / "avg_rating_by_refund_status.png", dpi=150)
+            plt.close()
+
+    if "delay_category" in cleaned.columns:
+        delay_share_pct = cleaned["delay_category"].value_counts(normalize=True, dropna=False).mul(100)
+        if not delay_share_pct.empty:
+            plt.figure(figsize=(6, 6))
+            plt.pie(
+                delay_share_pct.values,
+                labels=delay_share_pct.index.astype(str),
+                autopct="%1.1f%%",
+                startangle=90,
+                wedgeprops={"linewidth": 1, "edgecolor": "white"},
+            )
+            plt.title("Order Share by Delay Category")
+            plt.tight_layout()
+            plt.savefig(FIGURE_DIR / "delay_category_share_pie.png", dpi=150)
+            plt.close()
+
     corr_cols = [col for col in ["delivery_duration_min", "rating", "order_value_inr", "order_minute_of_day"] if col in cleaned.columns]
     if len(corr_cols) >= 2:
         corr_matrix = cleaned[corr_cols].corr(numeric_only=True)
@@ -533,9 +646,10 @@ def main() -> None:
     # End-to-end pipeline: load raw -> clean -> save outputs -> report key metrics.
     raw = load_data(RAW_FILE)
     cleaned = clean_data(raw)
+    validation = validate_dataset_consistency(cleaned)
     cleaned.to_csv(CLEAN_FILE, index=False)
 
-    summary_text = write_summary(cleaned, raw, REPORT_FILE)
+    summary_text = write_summary(cleaned, raw, REPORT_FILE, validation=validation)
     make_plots(cleaned)
 
     duration_rating_corr = cleaned[["delivery_duration_min", "rating"]].corr().iloc[0, 1]
@@ -549,6 +663,14 @@ def main() -> None:
     print(f"Average rating: {cleaned['rating'].mean():.2f} / 5")
     print(f"Late share (>30 min): {late_share:.2f}%")
     print(f"Duration vs rating correlation: {duration_rating_corr:.4f}")
+    print("\nDataset validation checks:")
+    print("- Key-column null counts:", validation["null_counts"])
+    print("- Numeric dtype checks:", validation["dtype_checks"])
+    print("- Duplicate order_id rows after cleaning:", validation["duplicate_order_ids"])
+    print("- order_hour within 0-23:", validation["hour_range_ok"])
+    if "delivery_duration_min" in cleaned.columns:
+        plausible_share = cleaned["delivery_duration_min"].between(20, 40).mean() * 100
+        print(f"- Deliveries in 20-40 min band: {plausible_share:.2f}%")
     if {"order_hour", "delivery_duration_min"}.issubset(cleaned.columns):
         hour_delay = cleaned.groupby("order_hour", dropna=True)["delivery_duration_min"].mean()
         if not hour_delay.empty:

@@ -160,4 +160,3 @@ After first deployment, your site URL will be:
 ## 📄 License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
