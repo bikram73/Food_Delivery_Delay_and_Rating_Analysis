@@ -242,6 +242,32 @@
           </ul>
         </div>
       </section>
+
+      <section class="section">
+        <h2>Dashboard Snapshot</h2>
+        <div class="chart-card dashboard-highlight">
+          <img src="../outputs/dashboard.png" alt="Power BI dashboard snapshot for food delivery analytics" />
+          <div class="chart-copy">
+            <h3>Interactive Power BI Dashboard</h3>
+            <p>
+              This dashboard brings the project findings together in one view. The top row shows the core KPI cards,
+              followed by the main analytical visuals and slicers for filtering by delivery delay, platform, and service rating.
+            </p>
+            <ul>
+              <li>KPI cards summarize average delivery time, average rating, total orders, and on-time rate.</li>
+              <li>The bar chart compares average delivery time by delay status and shows late deliveries taking longer.</li>
+              <li>The column chart shows how orders are distributed across service ratings, with 5-star ratings dominating.</li>
+              <li>The line chart uses a generated month field because the source file does not include a real date column.</li>
+              <li>The scatter plot checks whether longer delivery time lowers rating; the relationship is weak in this dataset.</li>
+              <li>The pie charts show refund requested share and delivery delay share, which help summarize service health quickly.</li>
+            </ul>
+            <p>
+              Important note: the monthly trend is based on a synthetic month column created from the row index,
+              so it is useful for presentation but not a true calendar month analysis from the source CSV.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer>
